@@ -23,9 +23,9 @@ export default function History() {
           <h3 style={{ margin: 0 }}>{m} · Total {inr(list.reduce((s, r) => s + r.netSalary, 0))}</h3>
           <a className="btn" href={`/api/export?month=${m}`}>⬇ CSV</a>
         </div>
-        <table><thead><tr><th>Emp ID</th><th>Name</th><th>Salary</th><th>Work</th><th>Hol.</th><th>Abs</th><th>Half</th><th>From balance</th><th>Unpaid</th><th>Deduction</th><th>Net</th></tr></thead>
+        <table><thead><tr><th>Emp ID</th><th>Name</th><th>Salary</th><th>Work</th><th>Hol.</th><th>Abs</th><th>Half</th><th>Casual</th><th>Sick</th><th>Unpaid</th><th>Leave ded.</th><th>TDS</th><th>Net</th></tr></thead>
           <tbody>{list.map(r => <tr key={r._id}><td>{r.empId}</td><td>{r.name}</td><td>{inr(r.monthlySalary)}</td><td>{r.workingDays}</td><td>{r.holidays}</td>
-            <td>{r.absentDays}</td><td>{r.halfDays}</td><td>{r.leavesCovered}</td><td>{r.unpaidDays}</td><td>{inr(r.deduction)}</td><td><b>{inr(r.netSalary)}</b></td></tr>)}</tbody></table>
+            <td>{r.absentDays}</td><td>{r.halfDays}</td><td>{r.casualCovered}</td><td>{r.sickCovered}</td><td>{r.unpaidDays}</td><td>{inr(r.deduction)}</td><td>{inr(r.tds)}</td><td><b>{inr(r.netSalary)}</b></td></tr>)}</tbody></table>
       </div>))}
     {!groups.length && <div className="card">No records yet.</div>}
   </>);

@@ -1,27 +1,28 @@
 import { NextResponse } from "next/server";
 import { connect } from "@/lib/db";
 import { Employee } from "@/lib/models";
-import { leaveBalance } from "@/lib/leave";
 
-export async function GET(req: Request) {
+export async function GET() {
   await connect();
-  const year = new URL(req.url).searchParams.get("year") || String(new Date().getFullYear());
-  const list = await Employee.find().sort({ name: 1 }).lean();
-  const out = await Promise.all(list.map(async (e: any) => ({
-    ...e, _id: String(e._id), leaveBalance: await leaveBalance(String(e._id), year),
-  })));
-  return NextResponse.json(out);
+  const list: any[] = await Employee.find().sort({ name: 1 }).lean();
+  const yr = new Date().getFullYear();
+  // counters from a previous leave year show as fresh for the current year
+  return NextResponse.json(list.map(e => e.leaveYear < yr ? { ...e, casualUsed: 0, sickUsed: 0, leaveYear: yr } : e));
 }
 export async function POST(req: Request) {
   await connect();
-  const { empId, name, monthlySalary } = await req.json();
-  if (!empId || !name || !(Number(monthlySalary) >= 0))
-    return NextResponse.json({ error: "Name, Employee ID and salary are required" }, { status: 400 });
+  const b = await req.json();
+  const n = (v: any, d = 0) => (v === "" || v == null ? d : Number(v));
+  if (!b.empId || !b.name || !b.bankAccount || !b.ifsc || !(n(b.monthlySalary, -1) >= 0))
+    return NextResponse.json({ error: "All fields are required" }, { status: 400 });
   try {
-    const e = await Employee.create({ empId, name, monthlySalary: Number(monthlySalary) });
+    const e = await Employee.create({
+      empId: b.empId, name: b.name, bankAccount: b.bankAccount, ifsc: b.ifsc,
+      monthlySalary: n(b.monthlySalary), tdsPercent: n(b.tdsPercent),
+      casualAllotted: n(b.casualAllotted, 8), sickAllotted: n(b.sickAllotted, 8),
+    });
     return NextResponse.json(e, { status: 201 });
   } catch (err: any) {
-    const msg = err.code === 11000 ? "Employee ID already exists" : err.message;
-    return NextResponse.json({ error: msg }, { status: 400 });
+    return NextResponse.json({ error: err.code === 11000 ? "Employee ID already exists" : err.message }, { status: 400 });
   }
 }
